@@ -1,4 +1,4 @@
-require_relative '../src/yose'
+require_relative '../lib/yose'
 require 'date'
 
 class ShiftStore
@@ -38,12 +38,13 @@ class ShiftStore
       'start' => hhmm,
       'hours' => hours
     }
-    @db.alloc(plan)
+    @db.alloc!(plan) rescue nil
   end
 end
 
 if __FILE__ == $0
   app = ShiftStore.new
+
   seki = app.add_employee('関将俊') rescue app.employee_by_name('関将俊').first['uid']
   ikezawa = app.add_employee('池澤一廣') rescue app.employee_by_name('池澤一廣').first['uid']
   pp app.all_employee
@@ -76,5 +77,17 @@ if __FILE__ == $0
     app.add_plan(seki, '西那須野', d.year, d.month, d.day, '13:00', 4)
   end
 
+  employee = Hash.new do |h, k|
+    h[k] = app.db.fetch(k).dig("name") rescue nil
+  end
+  pp app.db.search({"type" => "予定", "店" => "大田原", "y" => 2021, "m" => 2}).map {|x|
+    it = x['obj']
+    [employee[it['従業員']]] + it.values_at(* %w(y m d start hours))
+  }
+
+  pp app.db.search({"type" => "予定", "店" => "矢板", "y" => 2021, "m" => 2}).map {|x|
+    it = x['obj']
+    [employee[it['従業員']]] + it.values_at(* %w(y m d start hours))
+  }
 end
 
