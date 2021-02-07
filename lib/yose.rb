@@ -24,9 +24,7 @@ CREATE INDEX world_idxgin ON world USING GIN (obj jsonb_path_ops);
 =end
   def create_table(name="world")
     db = Yose::DB.instance
-    db.transaction do |c|
-      c.exec("create extension moddatetime;") rescue nil
-    end
+    db.conn.exec("create extension moddatetime;") rescue nil
     db.transaction do |c|
       c.exec("create table #{name} (
         uid uuid
@@ -34,12 +32,19 @@ CREATE INDEX world_idxgin ON world USING GIN (obj jsonb_path_ops);
         , mtime timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
         , primary key(uid));")
       c.exec("CREATE TRIGGER #{name}_moddatetime
-        BEFORE UPDATE ON world
+        BEFORE UPDATE ON #{name}
         FOR EACH ROW
         EXECUTE PROCEDURE moddatetime (mtime);")
       c.exec("CREATE INDEX #{name}_idxgin 
         ON #{name} USING GIN (obj jsonb_path_ops);")
     end
+  end
+
+  def drop_table(name)
+    db = Yose::DB.instance
+    db.conn.exec("drop INDEX #{name}_idxgin") rescue nil
+    db.conn.exec("drop TRIGGER #{name}_moddatetime on #{name}") rescue nil
+    db.conn.exec("drop table #{name}") rescue nil
   end
 
   class DB
