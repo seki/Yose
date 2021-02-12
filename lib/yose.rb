@@ -61,7 +61,7 @@ CREATE INDEX world_idxgin ON world USING GIN (obj jsonb_path_ops);
 
     def initialize
       super()
-      url = ENV['DATABASE_URL'] || 'postgres:///yose'
+      url = ENV['YOSE_DATABASE_URL'] || ENV['DATABASE_URL'] || 'postgres:///yose'
       @conn = PG.connect(url)
       @conn.type_map_for_results = PG::BasicTypeMapForResults.new(@conn)
     end

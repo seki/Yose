@@ -4,7 +4,12 @@ require_relative '../lib/yose'
 class YoseTest<Test::Unit::TestCase
   TABLE_NAME = 'removeme'
   def self.startup
-    Yose::create_table(TABLE_NAME)
+    begin
+      Yose::create_table(TABLE_NAME)
+    rescue
+      puts "panic: create_table failed. table #{TABLE_NAME} is exists, exit!."
+      exit!
+    end
   end
 
   def self.shutdown
