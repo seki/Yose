@@ -75,6 +75,7 @@ CREATE INDEX world_idxgin ON world USING GIN (obj jsonb_path_ops);
     end
 
     def transaction
+      #FIXME
       synchronize do
         @conn.transaction do |c|
           yield(c)
@@ -138,7 +139,7 @@ EOQ
         c.exec_params(sql, [uid]).to_a.dig(0, 'obj')
       end
     end
-    alias recycle free
+    alias forget free
 
     def [](uid)
       sql =<<EOQ
