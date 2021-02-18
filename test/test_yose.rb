@@ -62,4 +62,16 @@ class YoseTest<Test::Unit::TestCase
     assert_equal({"foo" => "bar"}, it)
     assert_equal({"foo" => "bar"}, @store[one])
   end
+
+  def test_mtime_recent
+    one = @store.alloc({"foo" => "bar", "bar" => "baz"})
+    two = @store.alloc({"foo" => "bar", "bar" => "baz"})
+    mtime = @store.mtime(two)
+    three = @store.alloc({"foo" => "bar", "bar" => "baz"})
+    assert_equal(1, @store.recent(mtime).size)
+    ary = @store.recent(@store.mtime(one))
+    assert_equal(2, ary.size)
+    assert_equal(three, ary[0]['uid'])
+    assert_equal(two, ary[1]['uid'])
+  end
 end

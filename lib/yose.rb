@@ -91,6 +91,10 @@ CREATE INDEX world_idxgin ON world USING GIN (obj jsonb_path_ops);
     def as_json(json)
       (Hash === json) ? json.to_json : json
     end
+
+    def as_pg_time(time)
+      time.strftime("%F %T.%6N")
+    end
     
     def transaction(&proc)
       DB.instance.transaction(&proc)
@@ -145,6 +149,15 @@ EOQ
       end
     end
 
+    def mtime(uid)
+      sql =<<EOQ
+select mtime from #{@name} where uid = $1 limit 1;
+EOQ
+      transaction do |c|
+        c.exec_params(sql, [uid]).to_a.dig(0, 'mtime')
+      end
+    end
+
     def search(json)
       sql =<<EOQ
 select uid::text, obj, mtime from #{@name} where obj @> $1::jsonb;
@@ -179,6 +192,15 @@ update #{@name} set obj = obj - $2 where uid = $1 returning obj;
 EOQ
       transaction do |c|
         c.exec_params(sql, [uid, key]).to_a.dig(0, 'obj')
+      end
+    end
+
+    def recent(since)
+      sql =<<EOQ
+select uid::text, obj, mtime from #{@name} where mtime > $1 order by mtime desc;
+EOQ
+      transaction do |c|
+        c.exec_params(sql, [as_pg_time(since)]).to_a
       end
     end
   end
