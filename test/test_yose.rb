@@ -31,11 +31,35 @@ class YoseTest<Test::Unit::TestCase
     assert(@store.alloc!({"foo" => "baz"}))
   end
 
-  def test_update
+  def test_merge
     one = @store.alloc({"foo" => "bar", "bar" => "baz"})
     assert(one)
-    @store.update(one, {"foo" => "hoge"})
+    it = @store.merge(one, {"foo" => "hoge"})
+    assert_equal(["hoge", "baz"], it.values_at("foo", "bar"))
+    assert_equal(["hoge", "baz"], @store[one].values_at("foo", "bar"))
+  end
 
-    assert_equal(["hoge", "baz"], @store.fetch(one).values_at("foo", "bar"))
+  def test_replace
+    one = @store.alloc({"foo" => "bar", "bar" => "baz"})
+    assert(one)
+    it = @store.replace(one, {"hoge" => "fuga"})
+    assert_equal({"hoge" => "fuga"}, it)
+    assert_equal({"hoge" => "fuga"}, @store[one])
+  end
+
+  def test_free
+    one = @store.alloc({"foo" => "bar", "bar" => "baz"})
+    assert(one)
+    it = @store.free(one)
+    assert_equal({"foo" => "bar", "bar" => "baz"}, it)
+    assert_equal(nil, @store[one])
+  end
+
+  def test_delete
+    one = @store.alloc({"foo" => "bar", "bar" => "baz"})
+    assert(one)
+    it = @store.delete(one, "bar")
+    assert_equal({"foo" => "bar"}, it)
+    assert_equal({"foo" => "bar"}, @store[one])
   end
 end

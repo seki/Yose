@@ -81,7 +81,6 @@ CREATE INDEX world_idxgin ON world USING GIN (obj jsonb_path_ops);
         end
       end
     end
-
   end
 
   class Store
@@ -127,7 +126,7 @@ EOQ
       end
     end
 
-    def delete(uid)
+    def free(uid)
       sql =<<EOQ
 delete from #{@name} where uid = $1 returning obj;
 EOQ
@@ -135,8 +134,9 @@ EOQ
         c.exec_params(sql, [uid]).to_a.dig(0, 'obj')
       end
     end
+    alias recycle free
 
-    def fetch(uid)
+    def [](uid)
       sql =<<EOQ
 select obj from #{@name} where uid = $1 limit 1;
 EOQ
@@ -159,7 +159,26 @@ EOQ
 update #{@name} set obj = obj || $2::jsonb where uid = $1 returning obj;
 EOQ
       transaction do |c|
-        c.exec_params(sql, [uid, as_json(json)]).to_a
+        c.exec_params(sql, [uid, as_json(json)]).to_a.to_a.dig(0, 'obj')
+      end
+    end
+    alias merge update
+
+    def replace(uid, json)
+      sql =<<EOQ
+update #{@name} set obj = $2::jsonb where uid = $1 returning obj;
+EOQ
+      transaction do |c|
+        c.exec_params(sql, [uid, as_json(json)]).to_a.dig(0, 'obj')
+      end
+    end
+
+    def delete(uid, key)
+      sql =<<EOQ
+update #{@name} set obj = obj - $2 where uid = $1 returning obj;
+EOQ
+      transaction do |c|
+        c.exec_params(sql, [uid, key]).to_a.dig(0, 'obj')
       end
     end
   end

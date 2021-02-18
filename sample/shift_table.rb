@@ -49,16 +49,15 @@ if __FILE__ == $0
   ikezawa = app.add_employee('池澤一廣') rescue app.employee_by_name('池澤一廣').first['uid']
   pp app.all_employee
   seki = app.employee_by_name('関将俊').first['uid']
-  pp app.db.fetch(seki)
+  pp app.db[seki]
   app.db.update(seki, {'店' => %w(矢板 西那須野 大田原)})
-  pp app.db.fetch(seki)
-  # pp app.db.delete(seki)
+  pp app.db[seki]
   pp app.employee_by_name('関将俊')
   pp app.employee_by_name('池澤一廣')
-  app.db.update(ikezawa, {'店' => %w(矢板)})
+  app.db.merge(ikezawa, {'店' => %w(矢板)})
   miwa = app.add_employee('深谷美和') rescue nil
   if miwa
-    app.db.update(miwa, {'店' => %w(大田原 矢板)})
+    app.db.merge(miwa, {'店' => %w(大田原 矢板)})
   end
   puts '矢板'
   pp app.employee_by_store('矢板').map{|x| x['obj']}
@@ -78,7 +77,7 @@ if __FILE__ == $0
   end
 
   employee = Hash.new do |h, k|
-    h[k] = app.db.fetch(k).dig("name") rescue nil
+    h[k] = app.db[k].dig("name") rescue nil
   end
   pp app.db.search({"type" => "予定", "店" => "大田原", "y" => 2021, "m" => 2}).map {|x|
     it = x['obj']
